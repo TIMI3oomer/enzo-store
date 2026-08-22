@@ -1,0 +1,52 @@
+{
+  "brand": "ENZO",
+  "nav": {
+    "home": "Home",
+    "shop": "Shop",
+    "cart": "Cart",
+    "search": "Search",
+    "menCategory": "T-Shirts",
+    "sweats": "Sweatshirts",
+    "newBalance": "Shoes"
+  },
+  "hero": {
+    "title": "Street wear, our identity",
+    "subtitle": "Limited pieces, real quality, authentic design",
+    "cta": "Shop now"
+  },
+  "product": {
+    "material": "Material",
+    "fit": "Fit",
+    "care": "Care instructions",
+    "addToCart": "Add to cart",
+    "outOfStock": "Out of stock",
+    "size": "Size",
+    "quantity": "Quantity",
+    "relatedProducts": "You might also like"
+  },
+  "cart": {
+    "title": "Shopping cart",
+    "empty": "Your cart is empty",
+    "continueShopping": "Continue shopping",
+    "subtotal": "Subtotal",
+    "checkout": "Checkout",
+    "remove": "Remove"
+  },
+  "footer": {
+    "rights": "All rights reserved",
+    "contact": "Contact us",
+    "location": "Location"
+  },
+  "language": {
+    "ar": "العربية",
+    "en": "English"
+  },
+  "errors": {
+    "generic": "Something went wrong, please try again",
+    "notFound": "Page not found",
+    "network": "Could not connect to the server"
+  },
+  "success": {
+    "addedToCart": "Added to cart"
+  }
+}

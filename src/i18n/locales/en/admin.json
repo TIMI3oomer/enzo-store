@@ -1,0 +1,44 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "orders": "Orders",
+    "customers": "Customers",
+    "analytics": "Analytics",
+    "categories": "Categories",
+    "settings": "Settings",
+    "logout": "Log out"
+  },
+  "login": {
+    "title": "Admin Login",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in"
+  },
+  "products": {
+    "title": "Products",
+    "add": "Add product",
+    "edit": "Edit",
+    "delete": "Delete",
+    "nameAr": "Name (Arabic)",
+    "nameEn": "Name (English)",
+    "descAr": "Description (Arabic)",
+    "descEn": "Description (English)",
+    "price": "Price",
+    "stock": "Stock quantity",
+    "category": "Category",
+    "save": "Save"
+  },
+  "orders": {
+    "title": "Orders",
+    "orderNumber": "Order number",
+    "customer": "Customer",
+    "status": "Status",
+    "date": "Date",
+    "statusPending": "Pending",
+    "statusConfirmed": "Confirmed",
+    "statusShipped": "Shipped",
+    "statusDelivered": "Delivered",
+    "statusCancelled": "Cancelled"
+  }
+}

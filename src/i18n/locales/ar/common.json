@@ -1,0 +1,52 @@
+{
+  "brand": "ENZO",
+  "nav": {
+    "home": "الرئيسية",
+    "shop": "المتجر",
+    "cart": "السلة",
+    "search": "بحث",
+    "menCategory": "تيشيرتات",
+    "sweats": "سويت شيرت",
+    "newBalance": "أحذية"
+  },
+  "hero": {
+    "title": "لبس الشارع، بهويتنا",
+    "subtitle": "قطع محدودة، جودة عالية، تصميم عربي أصيل",
+    "cta": "تسوق الآن"
+  },
+  "product": {
+    "material": "الخامة",
+    "fit": "المقاس",
+    "care": "تعليمات العناية",
+    "addToCart": "أضف إلى السلة",
+    "outOfStock": "غير متوفر حالياً",
+    "size": "المقاس",
+    "quantity": "الكمية",
+    "relatedProducts": "قد يعجبك أيضاً"
+  },
+  "cart": {
+    "title": "سلة التسوق",
+    "empty": "سلتك فارغة",
+    "continueShopping": "متابعة التسوق",
+    "subtotal": "المجموع الفرعي",
+    "checkout": "إتمام الطلب",
+    "remove": "إزالة"
+  },
+  "footer": {
+    "rights": "جميع الحقوق محفوظة",
+    "contact": "تواصل معنا",
+    "location": "الموقع"
+  },
+  "language": {
+    "ar": "العربية",
+    "en": "English"
+  },
+  "errors": {
+    "generic": "حدث خطأ ما، حاول مرة أخرى",
+    "notFound": "الصفحة غير موجودة",
+    "network": "تعذر الاتصال بالخادم"
+  },
+  "success": {
+    "addedToCart": "تمت الإضافة إلى السلة"
+  }
+}
