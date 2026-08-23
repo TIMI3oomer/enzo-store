@@ -1,22 +1,35 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabaseClient.js";
-import { useLocalizedField } from "../context/LanguageContext.jsx";
+import { useLocalizedField, useLanguage } from "../context/LanguageContext.jsx";
 import ProductCard from "../components/ProductCard.jsx";
 
+const ALL_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
+
 // CHECKPOINT NOTE (Shop.jsx):
-// Category filter reads the slug from the URL (language-agnostic, e.g.
-// /shop/t-shirts works the same in ar/en) and displays the category's
-// localized name via useLocalizedField. Filters row uses flex-wrap +
-// gap, which reverses direction automatically under dir="rtl".
+// - Category tabs are rendered straight from the `categories` table, so
+//   the new Pants + Trainings categories (added in supabase/migration_v2.sql)
+//   show up here automatically with zero code changes once the migration
+//   is run.
+// - Fixed a real bug from the previous version: filtering a joined table
+//   like `.eq("categories.slug", slug)` only filters what comes back
+//   INSIDE that nested object, it does NOT narrow which product rows are
+//   returned. This version resolves the category's id first, then filters
+//   products by `category_id` directly -- the correct way to do it.
+// - Sort + size filter both use logical-property-safe flex-wrap layouts,
+//   so they read correctly in RTL and LTR without any direction branching.
 export default function Shop() {
   const { t } = useTranslation("common");
+  const { lang } = useLanguage();
   const { categorySlug } = useParams();
   const localize = useLocalizedField();
+
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sort, setSort] = useState("newest");
+  const [sizeFilter, setSizeFilter] = useState(null);
 
   useEffect(() => {
     supabase.from("categories").select("*").then(({ data }) => setCategories(data || []));
@@ -24,30 +37,121 @@ export default function Shop() {
 
   useEffect(() => {
     setLoading(true);
-    let query = supabase.from("products").select("*, categories(slug, name)").eq("is_active", true);
-    if (categorySlug) {
-      query = query.eq("categories.slug", categorySlug);
-    }
-    query.order("created_at", { ascending: false }).then(({ data }) => {
+
+    async function run() {
+      let query = supabase.from("products").select("*").eq("is_active", true);
+
+      if (categorySlug) {
+        const category = categories.find((c) => c.slug === categorySlug);
+        if (category) {
+          query = query.eq("category_id", category.id);
+        } else if (categories.length > 0) {
+          setProducts([]);
+          setLoading(false);
+          return;
+        } else {
+          return; // categories not loaded yet, wait for next run
+        }
+      }
+
+      if (sizeFilter) {
+        query = query.contains("sizes", [sizeFilter]);
+      }
+
+      if (sort === "price_asc") query = query.order("price", { ascending: true });
+      else if (sort === "price_desc") query = query.order("price", { ascending: false });
+      else query = query.order("created_at", { ascending: false });
+
+      const { data } = await query;
       setProducts(data || []);
       setLoading(false);
-    });
-  }, [categorySlug]);
+    }
+
+    run();
+  }, [categorySlug, categories, sort, sizeFilter]);
+
+  const activeCategory = categories.find((c) => c.slug === categorySlug);
+  const hasFilters = Boolean(categorySlug || sizeFilter || sort !== "newest");
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-      <h1 className="mb-6 font-display text-3xl">{t("nav.shop")}</h1>
+      <h1 className="mb-6 font-display text-3xl">
+        {activeCategory ? localize(activeCategory.name) : t("nav.shop")}
+      </h1>
 
-      <div className="mb-8 flex flex-wrap gap-3">
+      {/* Category tabs */}
+      <div className="mb-4 flex flex-wrap gap-3">
+        <Link
+          to="/shop"
+          className={`rounded-full border px-4 py-1.5 text-sm ${
+            !categorySlug ? "border-enzo-white text-enzo-white" : "hairline text-enzo-muted hover:border-enzo-white hover:text-enzo-white"
+          }`}
+        >
+          {lang === "ar" ? "الكل" : "All"}
+        </Link>
         {categories.map((c) => (
-          <a
+          <Link
             key={c.id}
-            href={`/shop/${c.slug}`}
-            className="rounded-full border hairline px-4 py-1.5 text-sm text-enzo-muted hover:border-enzo-white hover:text-enzo-white"
+            to={`/shop/${c.slug}`}
+            className={`rounded-full border px-4 py-1.5 text-sm ${
+              categorySlug === c.slug
+                ? "border-enzo-white text-enzo-white"
+                : "hairline text-enzo-muted hover:border-enzo-white hover:text-enzo-white"
+            }`}
           >
             {localize(c.name)}
-          </a>
+          </Link>
         ))}
+      </div>
+
+      {/* Sort + size filters */}
+      <div className="mb-8 flex flex-wrap items-center gap-4 border-y hairline py-4">
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-enzo-muted">{t("filters.sortBy")}</label>
+          <select value={sort} onChange={(e) => setSort(e.target.value)} className="input w-auto py-1.5 text-sm">
+            <option value="newest">{t("filters.newest")}</option>
+            <option value="price_asc">{t("filters.priceLowHigh")}</option>
+            <option value="price_desc">{t("filters.priceHighLow")}</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-enzo-muted">{t("filters.size")}</span>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={() => setSizeFilter(null)}
+              className={`rounded border px-2.5 py-1 text-xs ${
+                !sizeFilter ? "border-enzo-white text-enzo-white" : "border-enzo-line text-enzo-muted"
+              }`}
+            >
+              {t("filters.allSizes")}
+            </button>
+            {ALL_SIZES.map((s) => (
+              <button
+                key={s}
+                onClick={() => setSizeFilter(s)}
+                className={`rounded border px-2.5 py-1 text-xs ${
+                  sizeFilter === s ? "border-enzo-white text-enzo-white" : "border-enzo-line text-enzo-muted"
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {hasFilters && (
+          <Link
+            to="/shop"
+            onClick={() => {
+              setSort("newest");
+              setSizeFilter(null);
+            }}
+            className="ms-auto text-sm text-enzo-muted underline"
+          >
+            {t("filters.clear")}
+          </Link>
+        )}
       </div>
 
       {loading ? (

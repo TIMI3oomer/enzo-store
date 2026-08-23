@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Menu, X, ShoppingBag, Search } from "lucide-react";
+import { Menu, X, ShoppingBag, Search, User } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher.jsx";
 import CartDrawer from "./CartDrawer.jsx";
 import { useCart } from "../context/CartContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 // CHECKPOINT NOTE (Navbar.jsx):
 // Uses margin-inline-start/end (via Tailwind's `ms-*`/`me-*` utilities) and
@@ -16,6 +17,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const { count } = useCart();
+  const { session } = useAuth();
 
   const links = [
     { to: "/", label: t("nav.home") },
@@ -58,6 +60,15 @@ export default function Navbar() {
             <Search size={20} />
           </button>
 
+          {/* Account: goes straight to order history if logged in, otherwise to sign-in */}
+          <Link
+            to={session ? "/account" : "/login"}
+            aria-label={t("auth.myAccount")}
+            className="hidden text-enzo-muted transition-colors hover:text-enzo-white sm:block"
+          >
+            <User size={20} />
+          </Link>
+
           <button
             aria-label={t("nav.cart")}
             onClick={() => setCartOpen(true)}
@@ -95,6 +106,13 @@ export default function Navbar() {
                 {link.label}
               </NavLink>
             ))}
+            <Link
+              to={session ? "/account" : "/login"}
+              onClick={() => setMenuOpen(false)}
+              className="text-base font-medium text-enzo-white"
+            >
+              {session ? t("auth.myAccount") : t("auth.login")}
+            </Link>
             <LanguageSwitcher />
           </nav>
         </div>

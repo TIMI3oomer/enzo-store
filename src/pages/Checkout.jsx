@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useCart } from "../context/CartContext.jsx";
 import { useLanguage, useLocalizedField } from "../context/LanguageContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import { supabase } from "../lib/supabaseClient.js";
 
 const initialForm = { fullName: "", phone: "", city: "", address: "", notes: "", paymentMethod: "cod" };
@@ -16,11 +17,17 @@ const initialForm = { fullName: "", phone: "", city: "", address: "", notes: "",
 //   out in.
 // - order_items store a JSON snapshot of the product name at purchase
 //   time, so a later product rename doesn't rewrite historical orders.
+// - GUEST CHECKOUT IS STILL FULLY SUPPORTED. Logging in is optional: if a
+//   session exists, the full name is prefilled from account metadata and
+//   the order is linked to that account (user_id) so it shows up on
+//   /account. If not, user_id is simply null -- see migration_v2.sql's
+//   "create own or guest orders" policy, which allows both.
 export default function Checkout() {
   const { t } = useTranslation("checkout");
   const { t: tc } = useTranslation("common");
   const { items, subtotal, clearCart } = useCart();
   const { lang } = useLanguage();
+  const { session } = useAuth();
   const localize = useLocalizedField();
   const navigate = useNavigate();
 
@@ -28,6 +35,11 @@ export default function Checkout() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
+  useEffect(() => {
+    const name = session?.user?.user_metadata?.full_name;
+    if (name) setForm((f) => ({ ...f, fullName: f.fullName || name }));
+  }, [session]);
 
   const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -62,6 +74,7 @@ export default function Checkout() {
         subtotal,
         total: subtotal, // extend here if you add shipping cost logic
         locale: lang,
+        user_id: session?.user?.id ?? null,
       })
       .select()
       .single();
@@ -96,7 +109,16 @@ export default function Checkout() {
   return (
     <div className="mx-auto grid max-w-5xl grid-cols-1 gap-10 px-4 py-10 sm:px-6 md:grid-cols-2">
       <form onSubmit={handleSubmit} className="text-start">
-        <h1 className="mb-6 font-display text-2xl">{t("title")}</h1>
+        <h1 className="mb-2 font-display text-2xl">{t("title")}</h1>
+
+        {!session && (
+          <p className="mb-6 text-sm text-enzo-muted">
+            <Link to="/login" state={{ from: "/checkout" }} className="text-enzo-white underline">
+              {tc("auth.signIn")}
+            </Link>{" "}
+            {tc("auth.orContinueAsGuest")}
+          </p>
+        )}
 
         <Field label={t("fullName")} error={errors.fullName}>
           <input value={form.fullName} onChange={update("fullName")} className="input" />

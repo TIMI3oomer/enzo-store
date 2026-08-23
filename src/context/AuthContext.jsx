@@ -49,12 +49,24 @@ export function AuthProvider({ children }) {
     return { error };
   }
 
+  // Used by the CUSTOMER-facing register page (src/pages/Register.jsx).
+  // full_name is stored in Supabase Auth's user_metadata so Checkout.jsx
+  // can prefill it later without a separate "customers" table.
+  async function register(email, password, fullName) {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName } },
+    });
+    return { error };
+  }
+
   async function logout() {
     await supabase.auth.signOut();
   }
 
   return (
-    <AuthContext.Provider value={{ session, isAdmin, loading, login, logout }}>
+    <AuthContext.Provider value={{ session, isAdmin, loading, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );

@@ -48,5 +48,34 @@
   },
   "success": {
     "addedToCart": "تمت الإضافة إلى السلة"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "logout": "تسجيل الخروج",
+    "myAccount": "حسابي",
+    "fullName": "الاسم الكامل",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "noAccount": "ليس لديك حساب؟",
+    "haveAccount": "لديك حساب بالفعل؟",
+    "createOne": "أنشئ حساباً",
+    "signIn": "سجّل الدخول",
+    "orContinueAsGuest": "أو تابع كضيف",
+    "continueAsGuest": "المتابعة كضيف",
+    "myOrders": "طلباتي",
+    "noOrders": "لا توجد طلبات بعد",
+    "passwordMismatch": "كلمتا المرور غير متطابقتين",
+    "welcomeBack": "مرحباً بعودتك"
+  },
+  "filters": {
+    "sortBy": "ترتيب حسب",
+    "newest": "الأحدث",
+    "priceLowHigh": "السعر: من الأقل للأعلى",
+    "priceHighLow": "السعر: من الأعلى للأقل",
+    "size": "المقاس",
+    "allSizes": "كل المقاسات",
+    "clear": "مسح الفلاتر"
   }
 }
