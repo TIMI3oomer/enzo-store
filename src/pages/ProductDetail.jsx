@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { supabase } from "../lib/supabaseClient.js";
+import { api } from "../lib/api.js";
 import { useLocalizedField } from "../context/LanguageContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
 
 // CHECKPOINT NOTE (ProductDetail.jsx):
-// Product stays the SAME product object across a language switch (it's
-// fetched by slug, and slugs are language-neutral), only its displayed
-// text changes via useLocalizedField — this satisfies the "preserve the
-// current product when switching languages" requirement without any
-// extra logic.
+// Fetches from GET /api/products/:slug (backend) instead of Supabase
+// directly. The product stays the SAME object across a language switch
+// (slugs are language-neutral), only its displayed text changes via
+// useLocalizedField — this satisfies "preserve the current product when
+// switching languages" without any extra logic.
 export default function ProductDetail() {
   const { slug } = useParams();
   const { t } = useTranslation("common");
@@ -18,22 +18,22 @@ export default function ProductDetail() {
   const { addItem } = useCart();
 
   const [product, setProduct] = useState(null);
+  const [notFound, setNotFound] = useState(false);
   const [size, setSize] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
   const [added, setAdded] = useState(false);
 
   useEffect(() => {
-    supabase
-      .from("products")
-      .select("*")
-      .eq("slug", slug)
-      .maybeSingle()
-      .then(({ data }) => {
+    api
+      .get(`/products/${slug}`)
+      .then((data) => {
         setProduct(data);
         setSize(data?.sizes?.[0] ?? null);
-      });
+      })
+      .catch(() => setNotFound(true));
   }, [slug]);
 
+  if (notFound) return <div className="p-10 text-center text-enzo-muted">{t("errors.notFound")}</div>;
   if (!product) return <div className="p-10 text-center text-enzo-muted">…</div>;
 
   const handleAdd = () => {

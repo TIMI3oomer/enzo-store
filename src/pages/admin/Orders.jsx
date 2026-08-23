@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { supabase } from "../../lib/supabaseClient.js";
+import { api } from "../../lib/api.js";
 import AdminLayout from "../../components/AdminLayout.jsx";
 
 const STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
 
 // CHECKPOINT NOTE (admin/Orders.jsx):
-// Status updates go straight through Supabase; the "admin update orders"
-// RLS policy in schema.sql is what actually allows this write — the
-// admin-only screen is a UX convenience, not the security boundary.
+// Reads/writes go through GET /api/admin/orders and PATCH
+// /api/admin/orders/:id/status (backend), protected by requireAdmin.
 export default function AdminOrders() {
   const { t } = useTranslation("admin");
   const [orders, setOrders] = useState([]);
@@ -18,12 +17,12 @@ export default function AdminOrders() {
   }, []);
 
   async function load() {
-    const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
+    const data = await api.get("/admin/orders").catch(() => []);
     setOrders(data || []);
   }
 
   async function updateStatus(id, status) {
-    await supabase.from("orders").update({ status }).eq("id", id);
+    await api.patch(`/admin/orders/${id}/status`, { status });
     load();
   }
 

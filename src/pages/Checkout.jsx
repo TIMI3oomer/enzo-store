@@ -4,24 +4,24 @@ import { useTranslation } from "react-i18next";
 import { useCart } from "../context/CartContext.jsx";
 import { useLanguage, useLocalizedField } from "../context/LanguageContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
-import { supabase } from "../lib/supabaseClient.js";
+import { api } from "../lib/api.js";
 
 const initialForm = { fullName: "", phone: "", city: "", address: "", notes: "", paymentMethod: "cod" };
 
 // CHECKPOINT NOTE (Checkout.jsx):
-// - Client-side validation only blocks submission; the database itself
-//   also rejects malformed rows (see CHECK constraints in schema.sql), so
-//   security doesn't depend on this form alone.
-// - The order is inserted with `locale` set to the customer's current
-//   language, so the admin can see which language the customer checked
-//   out in.
-// - order_items store a JSON snapshot of the product name at purchase
-//   time, so a later product rename doesn't rewrite historical orders.
+// - The request sent to the backend contains ONLY product ids, sizes, and
+//   quantities -- never a price. POST /api/orders (server/src/routes/orders.js)
+//   calls the place_order() Postgres function (supabase/migration_v3.sql),
+//   which looks up real prices/stock itself. Even if someone edited this
+//   page's JS in devtools to send a fake price, the backend would ignore
+//   it entirely -- there's no price field for it to send.
+// - Client-side validation here only improves UX (instant feedback); the
+//   backend re-validates everything independently with zod
+//   (server/src/utils/validation.js).
 // - GUEST CHECKOUT IS STILL FULLY SUPPORTED. Logging in is optional: if a
-//   session exists, the full name is prefilled from account metadata and
-//   the order is linked to that account (user_id) so it shows up on
-//   /account. If not, user_id is simply null -- see migration_v2.sql's
-//   "create own or guest orders" policy, which allows both.
+//   session exists, the full name is prefilled and the order is linked to
+//   that account (so it shows up on /account); if not, it's a normal
+//   guest order.
 export default function Checkout() {
   const { t } = useTranslation("checkout");
   const { t: tc } = useTranslation("common");
@@ -62,48 +62,31 @@ export default function Checkout() {
     setSubmitting(true);
     setSubmitError("");
 
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .insert({
-        customer_name: form.fullName.trim(),
+    try {
+      const result = await api.post("/orders", {
+        fullName: form.fullName.trim(),
         phone: form.phone.trim(),
         city: form.city.trim(),
         address: form.address.trim(),
         notes: form.notes.trim() || null,
-        payment_method: form.paymentMethod,
-        subtotal,
-        total: subtotal, // extend here if you add shipping cost logic
+        paymentMethod: form.paymentMethod,
         locale: lang,
-        user_id: session?.user?.id ?? null,
-      })
-      .select()
-      .single();
+        items: items.map((item) => ({
+          product_id: item.productId,
+          size: item.size ?? null,
+          quantity: item.quantity,
+        })),
+      });
 
-    if (orderError) {
-      setSubmitError(tc("errors.network"));
+      clearCart();
+      navigate(`/order-confirmation/${result.orderNumber}`);
+    } catch (err) {
+      // place_order() raises clean messages like "Insufficient stock for
+      // enzo-black-tee: only 1 left" -- safe to show directly.
+      setSubmitError(err.message || tc("errors.network"));
+    } finally {
       setSubmitting(false);
-      return;
     }
-
-    const orderItems = items.map((item) => ({
-      order_id: order.id,
-      product_id: item.productId,
-      product_name: item.name,
-      size: item.size,
-      quantity: item.quantity,
-      unit_price: item.price,
-    }));
-
-    const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
-
-    if (itemsError) {
-      setSubmitError(tc("errors.network"));
-      setSubmitting(false);
-      return;
-    }
-
-    clearCart();
-    navigate(`/order-confirmation/${order.order_number}`);
   }
 
   return (
@@ -179,6 +162,11 @@ export default function Checkout() {
           <span>{t("total")}</span>
           <span>{subtotal}</span>
         </div>
+        <p className="mt-2 text-xs text-enzo-muted">
+          {lang === "ar"
+            ? "السعر النهائي يُحتسب من الخادم عند تأكيد الطلب."
+            : "Final price is recalculated by the server when you confirm."}
+        </p>
       </div>
     </div>
   );

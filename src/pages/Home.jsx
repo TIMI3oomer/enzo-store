@@ -2,26 +2,22 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { supabase } from "../lib/supabaseClient.js";
+import { api } from "../lib/api.js";
 import ProductCard from "../components/ProductCard.jsx";
 
 // CHECKPOINT NOTE (Home.jsx):
 // Hero is deliberately typographic (big bilingual-ready headline) rather
 // than a generic banner-plus-carousel, matching the bold/minimal streetwear
 // identity from the ENZO Instagram. "New arrivals" pulls the 8 newest
-// active products straight from Supabase — no hardcoded product data.
+// active products from the Node backend (GET /api/products), which reads
+// from Supabase server-side — the frontend no longer queries Supabase
+// directly for product data.
 export default function Home() {
   const { t } = useTranslation("common");
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    supabase
-      .from("products")
-      .select("*")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(8)
-      .then(({ data }) => setProducts(data || []));
+    api.get("/products").then((data) => setProducts((data || []).slice(0, 8)));
   }, []);
 
   return (

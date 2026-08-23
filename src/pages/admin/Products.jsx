@@ -2,15 +2,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
-import { supabase } from "../../lib/supabaseClient.js";
+import { api } from "../../lib/api.js";
 import { useLocalizedField } from "../../context/LanguageContext.jsx";
 import AdminLayout from "../../components/AdminLayout.jsx";
 
 // CHECKPOINT NOTE (admin/Products.jsx):
-// Table columns don't hardcode text-align — `text-start` follows the
-// active admin language direction, and the "+" add button uses `ms-auto`
-// (margin-inline-start: auto) so it sits on the correct side automatically
-// in both RTL and LTR admin views.
+// List/delete now go through GET/DELETE /api/admin/products (backend),
+// protected by requireAdmin. Table columns don't hardcode text-align —
+// `text-start` follows the active admin language direction.
 export default function AdminProducts() {
   const { t } = useTranslation("admin");
   const localize = useLocalizedField();
@@ -21,13 +20,13 @@ export default function AdminProducts() {
   }, []);
 
   async function load() {
-    const { data } = await supabase.from("products").select("*").order("created_at", { ascending: false });
+    const data = await api.get("/admin/products").catch(() => []);
     setProducts(data || []);
   }
 
   async function handleDelete(id) {
     if (!confirm("?")) return;
-    await supabase.from("products").delete().eq("id", id);
+    await api.del(`/admin/products/${id}`);
     load();
   }
 

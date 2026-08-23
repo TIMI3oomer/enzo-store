@@ -1,24 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { supabase } from "../lib/supabaseClient.js";
+import { api } from "../lib/api.js";
 import { useLocalizedField, useLanguage } from "../context/LanguageContext.jsx";
 import ProductCard from "../components/ProductCard.jsx";
 
 const ALL_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 
 // CHECKPOINT NOTE (Shop.jsx):
-// - Category tabs are rendered straight from the `categories` table, so
-//   the new Pants + Trainings categories (added in supabase/migration_v2.sql)
-//   show up here automatically with zero code changes once the migration
-//   is run.
-// - Fixed a real bug from the previous version: filtering a joined table
-//   like `.eq("categories.slug", slug)` only filters what comes back
-//   INSIDE that nested object, it does NOT narrow which product rows are
-//   returned. This version resolves the category's id first, then filters
-//   products by `category_id` directly -- the correct way to do it.
-// - Sort + size filter both use logical-property-safe flex-wrap layouts,
-//   so they read correctly in RTL and LTR without any direction branching.
+// Category tabs come from GET /api/categories (backend), so the Pants +
+// Trainings categories (added in supabase/migration_v2.sql) show up
+// automatically once that migration is run — no frontend change needed.
+// Filtering/sorting is now done server-side too (GET /api/products?category=
+// &size=&sort=), which is both correct (no joined-table filtering bug)
+// and faster (the database does the filtering, not the browser).
 export default function Shop() {
   const { t } = useTranslation("common");
   const { lang } = useLanguage();
@@ -32,43 +27,21 @@ export default function Shop() {
   const [sizeFilter, setSizeFilter] = useState(null);
 
   useEffect(() => {
-    supabase.from("categories").select("*").then(({ data }) => setCategories(data || []));
+    api.get("/categories").then((data) => setCategories(data || []));
   }, []);
 
   useEffect(() => {
     setLoading(true);
+    const params = new URLSearchParams();
+    if (categorySlug) params.set("category", categorySlug);
+    if (sizeFilter) params.set("size", sizeFilter);
+    if (sort !== "newest") params.set("sort", sort);
 
-    async function run() {
-      let query = supabase.from("products").select("*").eq("is_active", true);
-
-      if (categorySlug) {
-        const category = categories.find((c) => c.slug === categorySlug);
-        if (category) {
-          query = query.eq("category_id", category.id);
-        } else if (categories.length > 0) {
-          setProducts([]);
-          setLoading(false);
-          return;
-        } else {
-          return; // categories not loaded yet, wait for next run
-        }
-      }
-
-      if (sizeFilter) {
-        query = query.contains("sizes", [sizeFilter]);
-      }
-
-      if (sort === "price_asc") query = query.order("price", { ascending: true });
-      else if (sort === "price_desc") query = query.order("price", { ascending: false });
-      else query = query.order("created_at", { ascending: false });
-
-      const { data } = await query;
-      setProducts(data || []);
-      setLoading(false);
-    }
-
-    run();
-  }, [categorySlug, categories, sort, sizeFilter]);
+    api
+      .get(`/products?${params.toString()}`)
+      .then((data) => setProducts(data || []))
+      .finally(() => setLoading(false));
+  }, [categorySlug, sort, sizeFilter]);
 
   const activeCategory = categories.find((c) => c.slug === categorySlug);
   const hasFilters = Boolean(categorySlug || sizeFilter || sort !== "newest");

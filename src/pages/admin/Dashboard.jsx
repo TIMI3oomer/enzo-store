@@ -1,26 +1,18 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { supabase } from "../../lib/supabaseClient.js";
+import { api } from "../../lib/api.js";
 import AdminLayout from "../../components/AdminLayout.jsx";
 
 // CHECKPOINT NOTE (admin/Dashboard.jsx):
-// Simple at-a-glance stats. Expand this with real charts (e.g. recharts)
-// once there's enough order history to make a chart meaningful — flagged
-// here rather than building empty/fake charts now.
+// Stats now come from GET /api/admin/stats (backend), which is protected
+// by requireAdmin server-side — this page no longer queries Supabase
+// directly at all.
 export default function AdminDashboard() {
   const { t } = useTranslation("admin");
   const [stats, setStats] = useState({ products: 0, pendingOrders: 0, totalOrders: 0 });
 
   useEffect(() => {
-    async function load() {
-      const [{ count: products }, { count: pendingOrders }, { count: totalOrders }] = await Promise.all([
-        supabase.from("products").select("*", { count: "exact", head: true }),
-        supabase.from("orders").select("*", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("orders").select("*", { count: "exact", head: true }),
-      ]);
-      setStats({ products: products || 0, pendingOrders: pendingOrders || 0, totalOrders: totalOrders || 0 });
-    }
-    load();
+    api.get("/admin/stats").then(setStats).catch(() => {});
   }, []);
 
   return (

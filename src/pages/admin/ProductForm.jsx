@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { supabase } from "../../lib/supabaseClient.js";
+import { api } from "../../lib/api.js";
 import AdminLayout from "../../components/AdminLayout.jsx";
 
 const empty = {
@@ -42,17 +42,14 @@ export default function AdminProductForm() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    supabase.from("categories").select("*").then(({ data }) => setCategories(data || []));
+    api.get("/categories").then(setCategories).catch(() => {});
   }, []);
 
   useEffect(() => {
     if (!isEdit) return;
-    supabase
-      .from("products")
-      .select("*")
-      .eq("id", id)
-      .single()
-      .then(({ data }) => {
+    api
+      .get(`/admin/products/${id}`)
+      .then((data) => {
         if (!data) return;
         setForm({
           slug: data.slug,
@@ -72,7 +69,8 @@ export default function AdminProductForm() {
           sizes: (data.sizes || []).join(","),
           images: (data.images || []).join(","),
         });
-      });
+      })
+      .catch(() => {});
   }, [id, isEdit]);
 
   const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -96,16 +94,15 @@ export default function AdminProductForm() {
       images: form.images.split(",").map((s) => s.trim()).filter(Boolean),
     };
 
-    const { error } = isEdit
-      ? await supabase.from("products").update(payload).eq("id", id)
-      : await supabase.from("products").insert(payload);
-
-    setSaving(false);
-    if (error) {
-      setError(error.message);
-      return;
+    try {
+      if (isEdit) await api.put(`/admin/products/${id}`, payload);
+      else await api.post("/admin/products", payload);
+      navigate("/admin/products");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
     }
-    navigate("/admin/products");
   }
 
   return (

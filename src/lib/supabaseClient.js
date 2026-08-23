@@ -1,18 +1,23 @@
 import { createClient } from "@supabase/supabase-js";
 
 // -----------------------------------------------------------------------
-// CHECKPOINT NOTE — ACTION REQUIRED
+// CHECKPOINT NOTE — UPDATED
 // File: src/lib/supabaseClient.js
 //
+// This client is now used ONLY for Supabase Auth (login, register,
+// session, password reset) via AuthContext.jsx. All actual store data —
+// products, categories, orders, admin actions — goes through the Node
+// backend instead (see src/lib/api.js), which uses the service_role key
+// server-side and enforces its own admin checks + validation. Row Level
+// Security policies in supabase/schema.sql are kept as a second,
+// independent safety net, not the primary gate anymore.
+//
 // 1. Create a project at https://supabase.com
-// 2. Run the SQL in /supabase/schema.sql (SQL editor) to create the tables
-//    and Row Level Security policies.
-// 3. Copy your Project URL and anon/public API key from
-//    Project Settings -> API, and put them in a ".env" file at the project
-//    root (copy .env.example to .env and fill in the two values).
-// 4. Never commit the "service_role" key to the frontend — only the
-//    "anon" key belongs here. The service_role key must only be used in a
-//    secure server/edge function (see note in schema.sql about RLS).
+// 2. Run supabase/schema.sql, then migration_v2.sql, then migration_v3.sql
+//    in the SQL editor.
+// 3. Copy your Project URL and anon/public key into .env (frontend) —
+//    see .env.example. The service_role key goes in server/.env instead,
+//    NEVER here.
 // -----------------------------------------------------------------------
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;

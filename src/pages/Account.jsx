@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext.jsx";
-import { supabase } from "../lib/supabaseClient.js";
+import { api } from "../lib/api.js";
 
 // CHECKPOINT NOTE (pages/Account.jsx):
-// Shows a logged-in customer's own past orders. This only works because
-// migration_v2.sql adds the "customer read own orders" RLS policy — a
-// customer can never see anyone else's orders no matter what, since the
-// database itself filters by auth.uid(), not just this page's query.
+// Shows a logged-in customer's own past orders via GET /api/orders/mine
+// (backend), which verifies the Supabase access token and filters by that
+// verified user's id server-side — a customer can never fetch anyone
+// else's orders no matter what this page's code does, because the id
+// comes from the token, not from anything the client sends.
 export default function Account() {
   const { t } = useTranslation("common");
   const { session, loading: authLoading, logout } = useAuth();
@@ -18,14 +19,10 @@ export default function Account() {
 
   useEffect(() => {
     if (!session?.user) return;
-    supabase
-      .from("orders")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setOrders(data || []);
-        setLoading(false);
-      });
+    api
+      .get("/orders/mine")
+      .then((data) => setOrders(data || []))
+      .finally(() => setLoading(false));
   }, [session]);
 
   if (authLoading) return null;
