@@ -34,7 +34,8 @@ export default function AdminLogin() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-enzo-black px-4">
-      <div className="mb-8">
+      <div className="mb-8 flex flex-col items-center gap-4">
+        <img src="/logo.jpg" alt="ENZO" className="h-14 w-14 rounded-full" />
         <LanguageSwitcher />
       </div>
       <form onSubmit={handleSubmit} className="w-full max-w-sm text-start">

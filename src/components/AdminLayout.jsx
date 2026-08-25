@@ -29,7 +29,7 @@ export default function AdminLayout({ children, title }) {
   return (
     <div className="flex min-h-screen">
       <aside className="hidden w-60 flex-none flex-col border-e hairline bg-enzo-panel p-6 md:flex">
-        <p className="mb-8 font-display text-xl">ENZO</p>
+        <img src="/logo.jpg" alt="ENZO" className="mb-8 h-10 w-10 rounded-full" />
         <nav className="flex flex-1 flex-col gap-1">
           {links.map(({ to, label, icon: Icon, end }) => (
             <NavLink

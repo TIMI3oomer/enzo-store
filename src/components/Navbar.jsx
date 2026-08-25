@@ -28,8 +28,8 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 border-b hairline bg-enzo-black/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
         {/* Logo */}
-        <Link to="/" className="font-display text-2xl tracking-wide">
-          ENZO
+        <Link to="/" className="flex items-center">
+          <img src="/logo.jpg" alt="ENZO" className="h-9 w-9 rounded-full sm:h-10 sm:w-10" />
         </Link>
 
         {/* Desktop nav */}

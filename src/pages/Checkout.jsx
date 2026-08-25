@@ -6,7 +6,7 @@ import { useLanguage, useLocalizedField } from "../context/LanguageContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../lib/api.js";
 
-const initialForm = { fullName: "", phone: "", city: "", address: "", notes: "", paymentMethod: "cod" };
+const initialForm = { fullName: "", email: "", phone: "", city: "", address: "", notes: "", paymentMethod: "cod" };
 
 // CHECKPOINT NOTE (Checkout.jsx):
 // - The request sent to the backend contains ONLY product ids, sizes, and

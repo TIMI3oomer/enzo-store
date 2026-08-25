@@ -185,6 +185,36 @@ trigger. This is what backs:
   classes that would misalign under RTL; none were found outside of code
   comments, so no further alignment fixes were needed.
 
+**Checkpoint 16 — Real logo + 3D scroll showcase on the homepage**
+- `public/logo.jpg` is your real ENZO logo (from the Instagram profile
+  picture). It now replaces the text "ENZO" wordmark in the Navbar,
+  Footer, admin sidebar, admin login screen, and the browser tab favicon
+  — every spot that previously just rendered the word "ENZO" in the
+  display font.
+- `src/components/ScrollShowcase.jsx` is the new homepage signature
+  motion moment: as you scroll, product cards rise up from below and
+  rotate in from a 3D angle (alternating left/right) into a flat resting
+  position, then everything else on the page stays calm by contrast.
+  It's driven by `framer-motion`'s `useScroll`/`useTransform` per card
+  (already a dependency, no new packages needed) and only ever animates
+  `transform`/`opacity` (GPU-composited, never triggers layout), so it
+  stays smooth on lower-end phones.
+- **Responsive**: grid goes 2 → 3 → 4 columns; rotation angles are kept
+  modest (14°) so cards never swing outside their column on narrow
+  screens; `overflow-x-hidden` on the section guards against any stray
+  horizontal scroll from the 3D perspective.
+- **Accessibility**: `useReducedMotion()` disables the rise/rotate
+  entirely for anyone with that OS preference — cards just fade in
+  instead of being skipped or breaking.
+- A few of the reference product photos you shared use other brands'
+  trademarks (Nike, Real Madrid, national federation crests) — those
+  specific images were intentionally not added to the codebase, since
+  shipping them as real product photos on a commercial site is a
+  trademark risk independent of anything code-related. The showcase pulls
+  from whatever products you add through the admin panel, so once you
+  upload your own photography it'll animate in automatically — no code
+  changes needed on your end for that.
+
 ## 4. Things you need to change / decide
 
 Search the code for `CHECKPOINT NOTE` to find every flagged spot. Main ones:
